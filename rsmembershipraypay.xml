@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="3.0" type="plugin" group="system" method="upgrade">
+    <name>RayPay for RSMembership</name>
+    <description>RayPay payment gateway for RSMembership</description>
+    <creationDate>June 2021</creationDate>
+    <copyright>Copyright (C) 2021 RayPay</copyright>
+    <author>Developer: hanieh729, Publisher: Saminray</author>
+    <authorUrl>https://saminray.com</authorUrl>
+    <authorEmail>info@saminray.com</authorEmail>
+    <version>1.0</version>
+    <license>http://www.gnu.org/licenses/gpl-2.0.html GPLv2 or later</license>
+
+    <files>
+        <filename plugin="rsmembershipraypay">rsmembershipraypay.php</filename>
+        <filename>index.html</filename>
+    </files>
+
+    <updateservers>
+        <server type="extension" priority="1" name="System - RayPay for RSMembership">https://raypay.ir/plugins</server>
+    </updateservers>
+
+    <config>
+        <fields name="params">
+            <fieldset name="basic">
+                <field name="user_id" type="text" size="60" label="شناسه کاربری" description="طفا شناسه کاربری خود را از پنل رای پی دریافت نمایید ."/>
+                <field name="acceptor_code" type="text" size="60" label="کد پذیرنده" description="لطفا کد پذیرنده خود را از پنل رای پی دریافت نمایید ."/>
+                <field name="currency" type="radio" default="rial" label="واحد پول" class="btn-group" description="واحد پول پیشفرض">
+                    <option value="rial">ریال</option>
+                    <option value="toman">تومان</option>
+                </field>
+            </fieldset>
+        </fields>
+    </config>
+</extension>

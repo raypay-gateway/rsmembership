@@ -81,11 +81,21 @@ class plgSystemRSMembershipRayPay extends JPlugin
                 'comment'      => htmlentities( ' پرداخت افزونه RSMembership با شماره فاکتور  ' . $transaction->id, ENT_COMPAT, 'utf-8'),
             );
 
-            $url  = 'http://185.165.118.211:14000/raypay/api/v1/Payment/getPaymentTokenWithUserID';
-            $options = array('Content-Type' => 'application/json');
-            $result = $this->http->post($url, json_encode($data, true), $options);
-            $result = json_decode($result->body);
-            $http_status = $result->StatusCode;
+            $url  = 'https://api.raypay.ir/raypay/api/v1/Payment/getPaymentTokenWithUserID';
+			$options = array('Content-Type: application/json');
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL, $url);
+			curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+			curl_setopt($ch, CURLOPT_HTTPHEADER,$options );
+			$result = curl_exec($ch);
+			$result = json_decode($result );
+			$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+			curl_close($ch);
+            //$options = array('Content-Type' => 'application/json');
+            //$result = $this->http->post($url, json_encode($data, true), $options);
+            //$result = json_decode($result->body);
+            //$http_status = $result->StatusCode;
 
 
             if ( $http_status != 200 || empty($result) || empty($result->Data) )
@@ -168,11 +178,21 @@ class plgSystemRSMembershipRayPay extends JPlugin
 
 
             $data = array('order_id' => $orderId);
-            $url = 'http://185.165.118.211:14000/raypay/api/v1/Payment/checkInvoice?pInvoiceID=' . $invoiceId;;
-            $options = array('Content-Type' => 'application/json');
-            $result = $this->http->post($url, json_encode($data, true), $options);
-            $result = json_decode($result->body);
-            $http_status = $result->StatusCode;
+            $url = 'https://api.raypay.ir/raypay/api/v1/Payment/checkInvoice?pInvoiceID=' . $invoiceId;
+			$options = array('Content-Type: application/json');
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL, $url);
+			curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+			curl_setopt($ch, CURLOPT_HTTPHEADER,$options );
+			$result = curl_exec($ch);
+			$result = json_decode($result );
+			$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+			curl_close($ch);
+            //$options = array('Content-Type' => 'application/json');
+            //$result = $this->http->post($url, json_encode($data, true), $options);
+            //$result = json_decode($result->body);
+            //$http_status = $result->StatusCode;
 
             if ( $http_status != 200 )
             {

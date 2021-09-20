@@ -45,7 +45,8 @@ class plgSystemRSMembershipRayPay extends JPlugin
                 return;
 
             $user_id = trim($this->params->get('user_id'));
-            $acceptor_code = trim($this->params->get('acceptor_code'));
+            $marketing_id = trim($this->params->get('marketing_id'));
+            $sandbox = !($this->params->get('sandbox') == 'no');
 
             $extra_total = 0;
             foreach ($extra as $row) {
@@ -61,7 +62,7 @@ class plgSystemRSMembershipRayPay extends JPlugin
             }
             $transaction->store();
 
-            $callback = JURI::base() . 'index.php?option=com_rsmembership&raypayPayment=1&order_id=' .$transaction->id . '&';
+            $callback = JURI::base() . 'index.php?option=com_rsmembership&raypayPayment=1&order_id=' .$transaction->id;
             $callback = JRoute::_($callback, false);
             $invoice_id             = round(microtime(true) * 1000);
             $session  = JFactory::getSession();
@@ -74,14 +75,15 @@ class plgSystemRSMembershipRayPay extends JPlugin
                 'userID'       => $user_id,
                 'redirectUrl'  => $callback,
                 'factorNumber' => strval($transaction->id),
-                'acceptorCode' => $acceptor_code,
+                'marketingID' => $marketing_id,
                 'email'        => !empty($data->email)? $data->email : '',
                 'mobile'       => !empty($data->fields['phone'])? $data->fields['phone'] : '',
                 'fullName'     => !empty($data->name)? $data->name : '',
+                'enableSandBox'     => $sandbox,
                 'comment'      => htmlentities( ' پرداخت افزونه RSMembership با شماره فاکتور  ' . $transaction->id, ENT_COMPAT, 'utf-8'),
             );
 
-            $url  = 'https://api.raypay.ir/raypay/api/v1/Payment/getPaymentTokenWithUserID';
+            $url  = 'https://api.raypay.ir/raypay/api/v1/Payment/pay';
 			$options = array('Content-Type: application/json');
 			$ch = curl_init();
 			curl_setopt($ch, CURLOPT_URL, $url);
@@ -111,16 +113,9 @@ class plgSystemRSMembershipRayPay extends JPlugin
 
             RSMembership::saveTransactionLog( 'در حال هدایت به درگاه پرداخت', $transaction->id );
 
-            $access_token = $result->Data->Accesstoken;
-            $terminal_id  = $result->Data->TerminalID;
-
-            echo '<p style="color:#ff0000; font:18px Tahoma; direction:rtl;">در حال اتصال به درگاه بانکی. لطفا صبر کنید ...</p>';
-            echo '<form name="frmRayPayPayment" method="post" action=" https://mabna.shaparak.ir:8080/Pay ">';
-            echo '<input type="hidden" name="TerminalID" value="' . $terminal_id . '" />';
-            echo '<input type="hidden" name="token" value="' . $access_token . '" />';
-            echo '<input class="submit" type="submit" value="پرداخت" /></form>';
-            echo '<script>document.frmRayPayPayment.submit();</script>';
-
+            $token = $result->Data;
+            $link='https://my.raypay.ir/ipg?token=' . $token;
+            $app->redirect($link);
 
         }
         catch (Exception $e) {
@@ -154,7 +149,6 @@ class plgSystemRSMembershipRayPay extends JPlugin
     {
         $this->http = HttpFactory::getHttp();
         $jinput   = $app->input;
-        $invoiceId = $jinput->get->get('?invoiceID', '', 'STRING');
         $orderId = $jinput->get->get('order_id', '', 'STRING');
 
         $session  = JFactory::getSession();
@@ -170,19 +164,17 @@ class plgSystemRSMembershipRayPay extends JPlugin
         $transaction = @$db->loadObject();
 
         try {
-            if ( empty( $invoiceId ) || empty( $orderId ) )
+            if (  empty( $orderId ) )
                 throw new Exception( 'خطا هنگام بازگشت از درگاه' );
 
             if (!$transaction)
                 throw new Exception( 'سفارش پیدا نشد.' );
 
-
-            $data = array('order_id' => $orderId);
-            $url = 'https://api.raypay.ir/raypay/api/v1/Payment/checkInvoice?pInvoiceID=' . $invoiceId;
+            $url = 'https://api.raypay.ir/raypay/api/v1/Payment/verify';
 			$options = array('Content-Type: application/json');
 			$ch = curl_init();
 			curl_setopt($ch, CURLOPT_URL, $url);
-			curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+			curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($_POST));
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 			curl_setopt($ch, CURLOPT_HTTPHEADER,$options );
 			$result = curl_exec($ch);
@@ -200,12 +192,13 @@ class plgSystemRSMembershipRayPay extends JPlugin
                 throw new Exception($msg);
             }
 
-            $state           = $result->Data->State;
+            $state           = $result->Data->Status;
+            $verify_invoice_id           = $result->Data->InvoiceID;
 
             if ($state === 1) {
                 $query->clear();
                 $query->update($db->quoteName('#__rsmembership_transactions'))
-                    ->set($db->quoteName('hash') . ' = ' . $db->quote($invoiceId))
+                    ->set($db->quoteName('hash') . ' = ' . $db->quote($verify_invoice_id))
                     ->where($db->quoteName('id') . ' = ' . $db->quote($transaction->id));
 
                 $db->setQuery($query);
@@ -234,7 +227,7 @@ class plgSystemRSMembershipRayPay extends JPlugin
                 $app->redirect(JRoute::_(JURI::base() . 'index.php?option=com_rsmembership&view=mymemberships', false), $msg, 'message');
             }
 
-            $msg  = 'پرداخت ناموفق بوده است. شناسه ارجاع بانکی رای پی : ' . $invoiceId;
+            $msg  = 'پرداخت ناموفق بوده است. شناسه ارجاع بانکی رای پی : ' . $verify_invoice_id;
             throw new Exception($msg);
 
         } catch (Exception $e) {

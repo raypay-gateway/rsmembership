@@ -23,7 +23,11 @@
         <fields name="params">
             <fieldset name="basic">
                 <field name="user_id" type="text" size="60" label="شناسه کاربری" description="طفا شناسه کاربری خود را از پنل رای پی دریافت نمایید ."/>
-                <field name="acceptor_code" type="text" size="60" label="کد پذیرنده" description="لطفا کد پذیرنده خود را از پنل رای پی دریافت نمایید ."/>
+                <field name="marketing_id" type="text" size="60" label="شناسه کسب و کار" description="لطفا ناسه کسب و کار خود را از پنل رای پی دریافت نمایید ."/>
+                <field name="sandbox" type="radio" default="yes" label="فعالسازی SandBox" class="btn-group" description="با انتخاب این گزینه، پرداخت در محیط تست رای پی انجام می شود.">
+                    <option value="yes">بله</option>
+                    <option value="no">خیر</option>
+                </field>
                 <field name="currency" type="radio" default="rial" label="واحد پول" class="btn-group" description="واحد پول پیشفرض">
                     <option value="rial">ریال</option>
                     <option value="toman">تومان</option>
